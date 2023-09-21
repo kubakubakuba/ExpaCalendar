@@ -2,3 +2,7 @@ credentials.json
 programy
 token.pickle
 config.py
+run.sh
+__pycache__
+generate.py
+*.pkl

@@ -1,0 +1,7 @@
+pickle5  # For improved versions of Python 3.8 and below; in 3.9+ the native pickle module supports protocol 5.
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+fpdf
+qrcode[pil]
+Pillow
