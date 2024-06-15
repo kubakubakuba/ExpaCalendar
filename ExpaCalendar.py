@@ -31,6 +31,7 @@ class ExpaCalendar:
 				self.creds = pickle.load(token)
 
 		if not self.creds or not self.creds.valid:
+
 			if self.creds and self.creds.expired and self.creds.refresh_token:
 				self.creds.refresh(Request())
 			else:
@@ -46,9 +47,13 @@ class ExpaCalendar:
 		'''Returns a dictionary with dates as keys and events as values'''
 		if not start_date or not end_date:
 			current_year = datetime.now().year
-			start_date = f"{current_year}-07-01T00:00:00Z"
-			end_date = f"{current_year}-08-31T23:59:59Z"
-			
+			start_date = f"{current_year}-01-01T00:00:00Z"
+			end_date = f"{current_year}-12-31T23:59:59Z"
+
+		#check date format
+		assert datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%SZ')
+		assert datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%SZ')
+
 		calendar_id = self.CONFIG.calendar_link
 		events_result = self.service.events().list(calendarId=calendar_id, timeMin=start_date, timeMax=end_date, singleEvents=True, orderBy='startTime').execute()
 		events = events_result.get('items', [])
@@ -73,6 +78,7 @@ class ExpaCalendar:
 					location=location,
 					description=description
 				)
+				
 				event = tuple([date.strftime("%H:%M"), event_data])
 				
 				self.calendar_dict[key_date].append(event)
@@ -81,22 +87,18 @@ class ExpaCalendar:
 
 	def day_en_to_cz(self, day):
 		'''Converts a day name from English to Czech'''
-		if day == "Monday":
-			return "Pondělí"
-		elif day == "Tuesday":
-			return "Úterý"
-		elif day == "Wednesday":
-			return "Středa"
-		elif day == "Thursday":
-			return "Čtvrtek"
-		elif day == "Friday":
-			return "Pátek"
-		elif day == "Saturday":
-			return "Sobota"
-		elif day == "Sunday":
-			return "Neděle"
-		else:
-			return day
+		
+		days = {
+			"Monday": "Pondělí",
+			"Tuesday": "Úterý",
+			"Wednesday": "Středa",
+			"Thursday": "Čtvrtek",
+			"Friday": "Pátek",
+			"Saturday": "Sobota",
+			"Sunday": "Neděle"
+		}
+
+		return days.get(day, day)
 
 	def generate_pdf(self, calendar_dict):
 		'''Generates a PDF file for each date in the calendar_dict'''
@@ -124,7 +126,7 @@ class ExpaCalendar:
 
 			available_space = pdf.h - pdf.get_y() - 50 # Leave some space for the QR code
 			
-			# Add Unicode font
+			# add unicode font
 			pdf.add_font('Roboto-Bold', '', 'fonts/Roboto-Bold.ttf', uni=True)
 			pdf.add_font('Roboto-Regular', '', 'fonts/Roboto-Regular.ttf', uni=True)
 			pdf.add_font('Roboto-ThinItalic', '', 'fonts/Roboto-ThinItalic.ttf', uni=True)
