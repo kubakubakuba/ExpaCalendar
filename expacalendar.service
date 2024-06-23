@@ -1,0 +1,13 @@
+[Unit]
+Description=Expa Calendar Generator
+After=network.target
+
+[Service]
+WorkingDirectory=/var/www/web/expa
+ExecStart=/usr/bin/env python3 /var/www/web/expa/generate.py
+User=ubuntu
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

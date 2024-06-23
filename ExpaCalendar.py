@@ -78,7 +78,7 @@ class ExpaCalendar:
 					location=location,
 					description=description
 				)
-				
+
 				event = tuple([date.strftime("%H:%M"), event_data])
 				
 				self.calendar_dict[key_date].append(event)
@@ -135,7 +135,7 @@ class ExpaCalendar:
 			pdf.set_font('Roboto-Regular', '', 12)
 
 			pdf.set_font("Roboto-Regular", size=24)
-			pdf.cell(200, 10, txt=f"Astronomická expedice 2023 - denní program", ln=True, align="L")
+			pdf.cell(200, 10, txt=f"Astronomická expedice {datetime.now().strftime('%Y')} - denní program", ln=True, align="L")
 
 			pdf.line(10, pdf.get_y() + 1, 200, pdf.get_y() + 1) # +1 because of the image covering the line
 
@@ -182,7 +182,7 @@ class ExpaCalendar:
 					
 				pdf.image(qr_image_path, qr_code_x, qr_code_y, self.QR_SIZE, self.QR_SIZE)
 
-				pdf.image("expa_inv.png", pdf.w - 20, 0, 20, 20)
+				pdf.image("img/expa_inv.png", pdf.w - 20, 0, 20, 20)
 				
 				year = datetime.now().strftime('%Y')
 				pdf.set_font("Righteous", size=12)
