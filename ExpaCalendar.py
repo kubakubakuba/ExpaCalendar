@@ -212,7 +212,7 @@ class ExpaCalendar:
 
 				# Convert date_str to a format suitable for filenames
 				date_obj = datetime.strptime(date_str, '%d.%m. %Y')
-				filename = date_obj.strftime('program_%Y_%d_%m') + ".pdf"
+				filename = date_obj.strftime('program_%Y_%m_%d') + ".pdf"
 				path_to_save = os.path.join(self.OUT_FOLDER, filename)
 
 			# Save the PDF to the specified location
