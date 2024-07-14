@@ -12,6 +12,7 @@ import qrcode
 import locale
 from PIL import Image
 from random import randint
+from twilight import Twilight
 
 class ExpaCalendar:
 	def __init__(self, config):
@@ -43,7 +44,7 @@ class ExpaCalendar:
 
 		self.service = build('calendar', 'v3', credentials=self.creds)
 
-	def get_calendar_events(self, start_date=None, end_date=None):
+	def get_calendar_events(self, start_date = None, end_date=None) -> dict:
 		'''Returns a dictionary with dates as keys and events as values'''
 		if not start_date or not end_date:
 			current_year = datetime.now().year
@@ -85,7 +86,7 @@ class ExpaCalendar:
 
 		return self.calendar_dict
 
-	def day_en_to_cz(self, day):
+	def day_en_to_cz(self, day: str) -> str:
 		'''Converts a day name from English to Czech'''
 		
 		days = {
@@ -99,6 +100,94 @@ class ExpaCalendar:
 		}
 
 		return days.get(day, day)
+	
+	def moon_phase_en_to_cz(self, phase: str) -> str:
+		'''Converts a moon phase from English to Czech'''
+		
+		phases = {
+			"New Moon": "Nov",
+			"Waxing Crescent": "Dorůstající srpek",
+			"First Quarter": "První čtvrť",
+			"Waxing Gibbous": "Dorůstající měsíc",
+			"Full Moon": "Úplněk",
+			"Waning Gibbous": "Ubývající měsíc",
+			"Last Quarter": "Poslední čtvrť",
+			"Waning Crescent": "Ubývající srpek"
+		}
+
+		return phases.get(phase, phase)
+	
+	def get_moon_phase_image(self, phase: float) -> str:
+		folder = "img/"
+		images = [f"{folder}moon{i}.png" for i in range(17)]
+
+		ranges = [(0, 1), (1, 7.4), (7.4, 14.8), (14.8, 22.1), (22.1, 29.5),
+				(29.5, 36.9), (36.9, 43.2), (43.2, 56.3), (56.3, 62.6), (62.6, 68.9),
+				(68.9, 75.2), (75.2, 81.5), (81.5, 87.8), (87.8, 94.1), (94.1, 100)]
+		
+		z = zip(images, ranges)
+
+		img = [i for i, (l, u) in z if l <= phase < u]
+
+		return img[0]
+	
+	def generate_timestamps(self, date: str, pdf: FPDF) -> None:
+		current_x, current_y = pdf.get_x(), pdf.get_y() #get cursor location
+
+		twilight = Twilight(self.CONFIG.lat, self.CONFIG.lng, date, self.CONFIG.tmz).data
+		
+		 # Set font for moon phase text
+		pdf.set_font("Roboto-Regular", size=10)
+
+		# Overlay moon phase text at a specific position
+		pdf.set_xy(145, 40)
+		pdf.cell(0, 0, txt=f'Fáze měsíce: {self.moon_phase_en_to_cz(twilight["moon_phase"])}', ln=False, align="L")
+
+		sunrise_dt = datetime.fromisoformat(twilight["sunrise"])
+		sunset_dt = datetime.fromisoformat(twilight["sunset"])
+		
+		golden_begin_time_m = datetime.fromisoformat(twilight["golden_hour_morning"]["start"]).time().strftime('%H:%M:%S')
+		golden_end_time_m = datetime.fromisoformat(twilight["golden_hour_morning"]["end"]).time().strftime('%H:%M:%S')
+		golden_begin_time_e = datetime.fromisoformat(twilight["golden_hour_evening"]["start"]).time().strftime('%H:%M:%S')
+		golden_end_time_e = datetime.fromisoformat(twilight["golden_hour_evening"]["end"]).time().strftime('%H:%M:%S')
+
+		sunrise_time = sunrise_dt.strftime('%H:%M:%S')
+		sunset_time = sunset_dt.strftime('%H:%M:%S')
+
+		#'astronomical_twilight_begin': sunrise_sunset_data['astronomical_twilight_begin'],
+		#	'astronomical_twilight_end':
+
+		astron_from = datetime.fromisoformat(twilight["astronomical_twilight_begin"]).time().strftime('%H:%M:%S')
+		astron_to = datetime.fromisoformat(twilight["astronomical_twilight_end"]).time().strftime('%H:%M:%S')
+
+		pdf.set_xy(145, 50)
+		pdf.cell(0, 0, txt=f'Východ slunce: {sunrise_time}', ln=False, align="L")
+
+		pdf.set_xy(145, 60)
+		pdf.cell(0, 0, txt=f'Západ slunce:   {sunset_time}', ln=False, align="L")
+
+		pdf.set_xy(145, 70)
+		pdf.cell(0, 0, txt=f'Pozorování: {astron_to}-{astron_from}', ln=False, align="L")
+
+		pdf.set_xy(145, 80)
+		pdf.cell(0, 0, txt=f'Zlatá hodinka: {golden_begin_time_m}-{golden_end_time_m}', ln=True, align="L")
+
+		pdf.set_xy(145, 85)
+		pdf.cell(0, 0, txt=f'                          {golden_begin_time_e}-{golden_end_time_e}', ln=False, align="L")
+
+		moon_img = self.get_moon_phase_image(twilight["moon_phase_num"])
+
+		pdf.image(moon_img, 135, 36.5, 6, 6)
+
+		pdf.image("img/sunrise.png", 135, 46.5, 6, 6)
+
+		pdf.image("img/sunset.png", 135, 56.5, 6, 6)
+
+		pdf.image("img/telescope.png", 135, 66.5, 6, 6)
+		
+		pdf.image("img/sun.png", 135, 76.5, 6, 6)
+
+		pdf.set_xy(current_x, current_y) #reset cursor
 
 	def generate_pdf(self, calendar_dict):
 		'''Generates a PDF file for each date in the calendar_dict'''
@@ -131,6 +220,8 @@ class ExpaCalendar:
 			pdf.add_font('Roboto-Regular', '', 'fonts/Roboto-Regular.ttf', uni=True)
 			pdf.add_font('Roboto-ThinItalic', '', 'fonts/Roboto-ThinItalic.ttf', uni=True)
 			pdf.add_font('Righteous', '', 'fonts/Righteous.ttf', uni=True)
+			
+			self.generate_timestamps(date_str, pdf)
 
 			pdf.set_font('Roboto-Regular', '', 12)
 
@@ -145,6 +236,7 @@ class ExpaCalendar:
 			date_name = self.day_en_to_cz(date_name) if self.CONFIG.lang == 'cz' else date_name
 			pdf.cell(190, 10, txt=f"Program na {date_str[:-5]} ({date_name})", ln=True, align="R")
 
+			
 			# Loop through events
 			pdf.set_font("Roboto-Regular", size=12)
 			for time, event in events:
@@ -212,7 +304,7 @@ class ExpaCalendar:
 
 				# Convert date_str to a format suitable for filenames
 				date_obj = datetime.strptime(date_str, '%d.%m. %Y')
-				filename = date_obj.strftime('program_%Y_%d_%m') + ".pdf"
+				filename = date_obj.strftime('program_%Y_%m_%d') + ".pdf"
 				path_to_save = os.path.join(self.OUT_FOLDER, filename)
 
 			# Save the PDF to the specified location
@@ -220,5 +312,7 @@ class ExpaCalendar:
 
 			rick_on = "" if not self.rick else " with rick on"
 			print(f"PDF {path_to_save} generated successfully! {(rick_on)}")
+
+			exit(f"Only generating one PDF")
 
 		os.remove(qr_image_path)  # Remove the temporary image
