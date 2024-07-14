@@ -313,6 +313,4 @@ class ExpaCalendar:
 			rick_on = "" if not self.rick else " with rick on"
 			print(f"PDF {path_to_save} generated successfully! {(rick_on)}")
 
-			exit(f"Only generating one PDF")
-
 		os.remove(qr_image_path)  # Remove the temporary image
