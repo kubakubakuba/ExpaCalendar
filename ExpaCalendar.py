@@ -110,9 +110,9 @@ class ExpaCalendar:
 			"First Quarter": "První čtvrť",
 			"Waxing Gibbous": "Dorůstající měsíc",
 			"Full Moon": "Úplněk",
-			"Waning Gibbous": "Ubývající měsíc",
+			"Waning Gibbous": "Couvající měsíc",
 			"Last Quarter": "Poslední čtvrť",
-			"Waning Crescent": "Ubývající srpek"
+			"Waning Crescent": "Couvající srpek"
 		}
 
 		return phases.get(phase, phase)
