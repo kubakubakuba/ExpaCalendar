@@ -2,6 +2,7 @@ import requests
 from datetime import datetime, timedelta
 import ephem
 import pytz
+import pylunar
 
 class Twilight:
 	def __init__(self, lat, lng, date=None, timezone='UTC'):
@@ -18,47 +19,44 @@ class Twilight:
 
 	def format_time(self, dt):
 		"""Format the datetime object to a string."""
-		return dt.isoformat()
+		return dt.isoformat() if dt != '-' else '-'
+	
+	def convert_to_dms(self, degrees):
+		"""Convert decimal degrees to degrees, minutes, and seconds."""
+		d = int(degrees)
+		m = int((degrees - d) * 60)
+		s = (degrees - d - m / 60) * 3600
+		return d, m, s
 
-	def get_moon_phase(self, date):
+	def get_moon_data(self, date):
 		date = datetime.strptime(date, "%d.%m. %Y")
-		moon = ephem.Moon(date)
-		phase = moon.phase
+		moon = pylunar.MoonInfo(self.convert_to_dms(self.lat), self.convert_to_dms(self.lng))
+		moon.update((date.year, date.month, date.day, 0, 0, 0))
+		
+		moontimes = moon.rise_set_times(self.timezone.zone)
+		moonrise = '-'
+		moonset = '-'
 
-		return phase
+		print(moontimes)
 
-	def get_moon_phase_txt(self, date):
-		"""Calculate the moon phase using pyephem."""
-		date = datetime.strptime(date, "%d.%m. %Y")
-		moon = ephem.Moon(date)
-		phase = moon.phase
+		for event, time_tuple in moontimes:
+			if len(time_tuple) != 6:
+				#fix does not rise or set
+				continue
 
-		phases = [
-			(0, 1, "New Moon"),
-			(1, 7.4, "Waxing Crescent"),
-			(7.4, 14.8, "First Quarter"),
-			(14.8, 22.1, "Waxing Gibbous"),
-			(22.1, 29.5, "Full Moon"),
-			(29.5, 36.9, "Waning Gibbous"),
-			(36.9, 43.2, "Last Quarter"),
-			(43.2, 56.3, "Waning Crescent"),
-			(56.3, 62.6, "Last Quarter"),
-			(62.6, 68.9, "Waning Gibbous"),
-			(68.9, 75.2, "Full Moon"),
-			(75.2, 81.5, "Waxing Gibbous"),
-			(81.5, 87.8, "First Quarter"),
-			(87.8, 94.1, "Waxing Crescent"),
-			(94.1, 100, "New Moon")
-		]
+			if event == 'rise':
+				moonrise = datetime(*time_tuple)
+			elif event == 'set':
+				moonset = datetime(*time_tuple)
 
-		# Iterate over phases
-		phase_name = [name for s, e, name in phases if s <= phase < e]
+		colongitude = moon.colong()
+		moon_phase = moon.phase_name()
+		moon_emoji = moon.phase_emoji()
 
-		return phase_name[0]
+		return moonrise, moonset, colongitude, moon_phase, moon_emoji
 
 	def fetch_astronomical_data(self):
 		"""Fetches astronomical data for the given location and date."""
-		# API endpoints
 		self.formatted_date = datetime.strptime(self.date, "%d.%m. %Y").strftime("%Y-%m-%d")
 
 		sunrise_sunset_url = f'https://api.sunrise-sunset.org/json?lat={self.lat}&lng={self.lng}&date={self.formatted_date}&formatted=0'
@@ -66,8 +64,7 @@ class Twilight:
 		sunrise_sunset_response = requests.get(sunrise_sunset_url)
 		sunrise_sunset_data = sunrise_sunset_response.json()['results']
 
-		moon_phase = self.get_moon_phase_txt(str(self.date))
-		moon_phase_num = self.get_moon_phase(str(self.date))
+		moonrise, moonset, colongitude, moon_phase, moon_phase_emoji = self.get_moon_data(str(self.date))
 
 		sunrise = self.parse_time(sunrise_sunset_data['sunrise'])
 		sunset = self.parse_time(sunrise_sunset_data['sunset'])
@@ -100,7 +97,10 @@ class Twilight:
 			'astronomical_twilight_begin': self.format_time(astronomical_twilight_begin),
 			'astronomical_twilight_end': self.format_time(astronomical_twilight_end),
 			'moon_phase': moon_phase,
-			'moon_phase_num': moon_phase_num,
+			'moon_phase_emoji': moon_phase_emoji,
+			'moonrise': self.format_time(moonrise),
+			'moonset': self.format_time(moonset),
+			'colongitude': colongitude,
 			'golden_hour_morning': {
 				'start': self.format_time(golden_hour_morning_start),
 				'end': self.format_time(golden_hour_morning_end)
@@ -118,7 +118,7 @@ class Twilight:
 				'end': self.format_time(blue_hour_evening_end)
 			}
 		}
-		
+
 		print(data)
 		return data
 
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 	# Test data
 	lat = 40.7128
 	lng = -74.0060
-	date = '3.7. 2023'
+	date = '17.7. 2023'
 	timezone = 'Europe/Prague'
 	
 	astro_data = Twilight(lat, lng, date, timezone)

@@ -1,6 +1,6 @@
 import pickle
 import os.path
-from datetime import datetime
+from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
@@ -105,14 +105,14 @@ class ExpaCalendar:
 		'''Converts a moon phase from English to Czech'''
 		
 		phases = {
-			"New Moon": "Nov",
-			"Waxing Crescent": "Dorůstající srpek",
-			"First Quarter": "První čtvrť",
-			"Waxing Gibbous": "Dorůstající měsíc",
-			"Full Moon": "Úplněk",
-			"Waning Gibbous": "Couvající měsíc",
-			"Last Quarter": "Poslední čtvrť",
-			"Waning Crescent": "Couvající srpek"
+			"NEW_MOON": "Nov",
+			"WAXING_CRESCENT": "Dorůstající srpek",
+			"FIRST_QUARTER": "První čtvrť",
+			"WAXING_GIBBOUS": "Dorůstající Měsíc",
+			"FULL_MOON": "Úplněk",
+			"WANING_GIBBOUS": "Couvající Měsíc",
+			"LAST_QUARTER": "Poslední čtvrť",
+			"WANING_CRESCENT": "Couvající srpek"
 		}
 
 		return phases.get(phase, phase)
@@ -131,28 +131,38 @@ class ExpaCalendar:
 
 		return img[0]
 	
-	def generate_timestamps(self, date: str, pdf: FPDF) -> None:
+	def generate_timestamps(self, date: str, pdf) -> None:
 		current_x, current_y = pdf.get_x(), pdf.get_y() #get cursor location
 
 		twilight = Twilight(self.CONFIG.lat, self.CONFIG.lng, date, self.CONFIG.tmz).data
+
+		date_tomorrow = datetime.strptime(date, '%d.%m. %Y') + timedelta(days=1)
+		date_tomorrow = date_tomorrow.strftime('%d.%m. %Y')
+		twilight_tomorrow = Twilight(self.CONFIG.lat, self.CONFIG.lng, date_tomorrow, self.CONFIG.tmz).data
 		
 		 # Set font for moon phase text
 		pdf.set_font("Roboto-Regular", size=10)
 
 		# Overlay moon phase text at a specific position
 		pdf.set_xy(145, 40)
-		pdf.cell(0, 0, txt=f'Fáze měsíce: {self.moon_phase_en_to_cz(twilight["moon_phase"])}', ln=False, align="L")
+		pdf.cell(0, 0, txt=f'{self.moon_phase_en_to_cz(twilight["moon_phase"])}, col: {int(twilight["colongitude"])}°', ln=False, align="L")
 
-		sunrise_dt = datetime.fromisoformat(twilight["sunrise"])
-		sunset_dt = datetime.fromisoformat(twilight["sunset"])
+		pdf.set_xy(134, 40)
+
+		pdf.set_font('DejaVu', '', 14)
+		pdf.cell(0, 0, txt=twilight["moon_phase_emoji"], ln=False, align="L")
+
+		pdf.set_font("Roboto-Regular", size=10)
+
+		sunrise_dt = datetime.fromisoformat(twilight_tomorrow["sunrise"]).strftime('%H:%M:%S')
+		sunset_dt = datetime.fromisoformat(twilight["sunset"]).strftime('%H:%M:%S')
+		moonrise_dt = datetime.fromisoformat(twilight["moonrise"]).strftime('%H:%M:%S') if twilight["moonrise"] != '-' else datetime.fromisoformat(twilight_tomorrow["moonrise"]).strftime('%H:%M:%S')
+		moonset_dt = datetime.fromisoformat(twilight["moonset"]).strftime('%H:%M:%S') if twilight["moonset"] != '-' else datetime.fromisoformat(twilight_tomorrow["moonset"]).strftime('%H:%M:%S')
 		
 		golden_begin_time_m = datetime.fromisoformat(twilight["golden_hour_morning"]["start"]).time().strftime('%H:%M:%S')
 		golden_end_time_m = datetime.fromisoformat(twilight["golden_hour_morning"]["end"]).time().strftime('%H:%M:%S')
 		golden_begin_time_e = datetime.fromisoformat(twilight["golden_hour_evening"]["start"]).time().strftime('%H:%M:%S')
 		golden_end_time_e = datetime.fromisoformat(twilight["golden_hour_evening"]["end"]).time().strftime('%H:%M:%S')
-
-		sunrise_time = sunrise_dt.strftime('%H:%M:%S')
-		sunset_time = sunset_dt.strftime('%H:%M:%S')
 
 		#'astronomical_twilight_begin': sunrise_sunset_data['astronomical_twilight_begin'],
 		#	'astronomical_twilight_end':
@@ -161,31 +171,41 @@ class ExpaCalendar:
 		astron_to = datetime.fromisoformat(twilight["astronomical_twilight_end"]).time().strftime('%H:%M:%S')
 
 		pdf.set_xy(145, 50)
-		pdf.cell(0, 0, txt=f'Východ slunce: {sunrise_time}', ln=False, align="L")
+		pdf.cell(0, 0, txt=f'{moonrise_dt}', ln=False, align="L")
+
+		pdf.set_xy(175, 50)
+		pdf.cell(0, 0, txt=f'{moonset_dt}', ln=False, align="L")
 
 		pdf.set_xy(145, 60)
-		pdf.cell(0, 0, txt=f'Západ slunce:   {sunset_time}', ln=False, align="L")
+		pdf.cell(0, 0, txt=f'{sunset_dt}', ln=False, align="L")
+
+		pdf.set_xy(175, 60)
+		pdf.cell(0, 0, txt=f'{sunrise_dt}', ln=False, align="L")
 
 		pdf.set_xy(145, 70)
-		pdf.cell(0, 0, txt=f'Pozorování: {astron_to}-{astron_from}', ln=False, align="L")
+		pdf.cell(0, 0, txt=f'Astron. noc: {astron_to} - {astron_from}', ln=False, align="L")
 
-		pdf.set_xy(145, 80)
-		pdf.cell(0, 0, txt=f'Zlatá hodinka: {golden_begin_time_m}-{golden_end_time_m}', ln=True, align="L")
+		#pdf.set_xy(145, 80)
+		#pdf.cell(0, 0, txt=f'Zlatá hodinka: {golden_begin_time_m} - {golden_end_time_m}', ln=True, align="L")
 
-		pdf.set_xy(145, 85)
-		pdf.cell(0, 0, txt=f'                          {golden_begin_time_e}-{golden_end_time_e}', ln=False, align="L")
+		#pdf.set_xy(145, 85)
+		#pdf.cell(0, 0, txt=f'                          {golden_begin_time_e} - {golden_end_time_e}', ln=False, align="L")
 
-		moon_img = self.get_moon_phase_image(twilight["moon_phase_num"])
+		#moon_img = self.get_moon_phase_image(twilight["moon_phase_num"])
 
-		pdf.image(moon_img, 135, 36.5, 6, 6)
+		#pdf.image(moon_img, 135, 36.5, 6, 6)
 
-		pdf.image("img/sunrise.png", 135, 46.5, 6, 6)
+		pdf.image("img/moonrise.png", 135, 46.5, 6, 6)
+
+		pdf.image("img/moonset.png", 165, 46.5, 6, 6)
 
 		pdf.image("img/sunset.png", 135, 56.5, 6, 6)
 
+		pdf.image("img/sunrise.png", 165, 56.5, 6, 6)
+
 		pdf.image("img/telescope.png", 135, 66.5, 6, 6)
 		
-		pdf.image("img/sun.png", 135, 76.5, 6, 6)
+		#pdf.image("img/sun.png", 135, 76.5, 6, 6)
 
 		pdf.set_xy(current_x, current_y) #reset cursor
 
@@ -220,6 +240,9 @@ class ExpaCalendar:
 			pdf.add_font('Roboto-Regular', '', 'fonts/Roboto-Regular.ttf', uni=True)
 			pdf.add_font('Roboto-ThinItalic', '', 'fonts/Roboto-ThinItalic.ttf', uni=True)
 			pdf.add_font('Righteous', '', 'fonts/Righteous.ttf', uni=True)
+			pdf.add_font('NotoEmoji', '', 'fonts/NotoEmoji-Regular.ttf', uni=True)
+			pdf.add_font('SegoeUI', '', 'fonts/segoe-ui.ttf', uni=True)
+			pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
 			
 			self.generate_timestamps(date_str, pdf)
 
@@ -245,7 +268,7 @@ class ExpaCalendar:
 
 				pdf.set_font("Roboto-Bold", "", 12)
 				pdf.cell(0, 6, txt=event_data['summary'], border=0, ln=True)
-				
+
 				if event_data['end'] == time:
 					pdf.set_font("Roboto-Regular", "", 10)
 					pdf.cell(20, 6, txt=time, border=0)
@@ -263,10 +286,10 @@ class ExpaCalendar:
 					indent += 1
 					pdf.set_font("Roboto-Regular", "", 8)
 					pdf.cell(10)  # Indent for description
-					pdf.multi_cell(0, 8, txt=event_data['description'], border=0)
+					pdf.multi_cell(0, 8, txt=event_data['description'], border=0, ln=True)
 				
 				if indent < 1:
-					pdf.multi_cell(0, 8, txt="", border=0)
+					pdf.multi_cell(0, 8, txt="", border=0, ln=True)
 			
 				# Add QR code to the right side
 				qr_code_x = pdf.w - 50
