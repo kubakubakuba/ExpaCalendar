@@ -267,6 +267,29 @@ class ExpaCalendar:
 				event_data = event
 
 				pdf.set_font("Roboto-Bold", "", 12)
+				
+				if event_data['summary'].startswith("@sluzba:"):
+					cx, cy = pdf.get_x(), pdf.get_y() #get cursor location
+					
+					pdf.image("img/people.png", 135, 80, 6, 6)
+					pdf.set_xy(143, 80)
+					pdf.set_font("Roboto-Regular", "", 10)
+					pdf.cell(20, 6, txt="Služba:", border=0)
+
+					groups = event_data['summary'].split(":")[1].split(",")
+
+					pos = 80
+					pdf.set_font("Righteous", "", 10)
+					for g in groups:
+						pdf.set_xy(156, pos)
+						pdf.cell(0, 6, txt=g, border=0)
+						pdf.ln()
+						pos += 6
+					
+					pdf.set_xy(cx, cy) #reset cursor
+					continue
+
+				pdf.set_font("Righteous", "", 12)
 				pdf.cell(0, 6, txt=event_data['summary'], border=0, ln=True)
 
 				if event_data['end'] == time:
