@@ -8,4 +8,5 @@ run.sh
 __pycache__
 generate.py
 *.pkl
+*.pdf
 .venv
