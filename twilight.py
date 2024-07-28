@@ -37,7 +37,7 @@ class Twilight:
 		moonrise = '-'
 		moonset = '-'
 
-		print(moontimes)
+		#print(moontimes)
 
 		for event, time_tuple in moontimes:
 			if len(time_tuple) != 6:
@@ -119,7 +119,7 @@ class Twilight:
 			}
 		}
 
-		print(data)
+		#print(data)
 		return data
 
 if __name__ == "__main__":

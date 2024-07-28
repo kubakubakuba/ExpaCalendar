@@ -267,6 +267,8 @@ class ExpaCalendar:
 				event_data = event
 
 				pdf.set_font("Roboto-Bold", "", 12)
+
+				print(event_data['summary'])
 				
 				if event_data['summary'].startswith("@sluzba:"):
 					cx, cy = pdf.get_x(), pdf.get_y() #get cursor location
