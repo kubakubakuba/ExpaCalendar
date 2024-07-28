@@ -275,10 +275,10 @@ class ExpaCalendar:
 					cx, cy = pdf.get_x(), pdf.get_y() #get cursor location
 					
 					print(f"adding image at {cx}, {cy}")
-					pdf.image("img/people.png", 135, 80, 6, 6)
-					pdf.set_xy(143, 80)
+					pdf.image("img/people.png", 135, 76.5, 6, 6)
+					pdf.set_xy(145, 80)
 					pdf.set_font("Roboto-Regular", "", 10)
-					pdf.cell(20, 6, txt="Služba:", border=0)
+					pdf.cell(0, 0, txt="Služba:", border=0)
 
 					print(event_data['summary'])
 					groups = event_data['summary'].split(":")[1].split(",")
@@ -287,8 +287,8 @@ class ExpaCalendar:
 					pdf.set_font("Righteous", "", 10)
 					for g in groups:
 						print(f"adding group {g}")
-						pdf.set_xy(156, pos)
-						pdf.cell(0, 6, txt=g, border=0)
+						pdf.set_xy(158, pos)
+						pdf.cell(0, 0, txt=g, border=0)
 						pdf.ln()
 						pos += 6
 					
