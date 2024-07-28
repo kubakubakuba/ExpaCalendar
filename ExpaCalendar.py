@@ -271,6 +271,7 @@ class ExpaCalendar:
 				print(event_data['summary'])
 				
 				if event_data['summary'].startswith("@sluzba:"):
+					print("detected @sluzba")
 					cx, cy = pdf.get_x(), pdf.get_y() #get cursor location
 					
 					pdf.image("img/people.png", 135, 80, 6, 6)
