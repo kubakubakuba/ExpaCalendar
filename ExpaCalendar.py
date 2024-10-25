@@ -251,7 +251,7 @@ class ExpaCalendar:
 			pdf.set_font('Roboto-Regular', '', 12)
 
 			pdf.set_font("Righteous", size=22)
-			pdf.cell(200, 10, txt=f"Astronomická expedice {datetime.now().strftime('%Y')} - denní program", ln=True, align="L")
+			pdf.cell(200, 10, txt=f"{self.CONFIG.name} {datetime.now().strftime('%Y')} - denní program", ln=True, align="L")
 
 			pdf.line(10, pdf.get_y() + 1, 200, pdf.get_y() + 1) # +1 because of the image covering the line
 
