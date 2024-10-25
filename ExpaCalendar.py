@@ -47,9 +47,11 @@ class ExpaCalendar:
 	def get_calendar_events(self, start_date = None, end_date=None) -> dict:
 		'''Returns a dictionary with dates as keys and events as values'''
 		if not start_date or not end_date:
-			current_year = datetime.now().year
-			start_date = f"{current_year}-01-01T00:00:00Z"
-			end_date = f"{current_year}-12-31T23:59:59Z"
+			#current_year = datetime.now().year
+			sd = self.CONFIG.start_date.split(';')
+			ed = self.CONFIG.end_date.split(';')
+			start_date = f"{sd[0]}-{[sd[1]}-{sd[2]}T00:00:00Z"
+			end_date = f"{ed[0]}-{ed[1]}-{ed[2]}T23:59:59Z"
 
 		#check date format
 		assert datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%SZ')
