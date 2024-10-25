@@ -50,7 +50,7 @@ class ExpaCalendar:
 			#current_year = datetime.now().year
 			sd = self.CONFIG.start_date.split(';')
 			ed = self.CONFIG.end_date.split(';')
-			start_date = f"{sd[0]}-{[sd[1]}-{sd[2]}T00:00:00Z"
+			start_date = f"{sd[0]}-{sd[1]}-{sd[2]}T00:00:00Z"
 			end_date = f"{ed[0]}-{ed[1]}-{ed[2]}T23:59:59Z"
 
 		#check date format
