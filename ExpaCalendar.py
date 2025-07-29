@@ -269,13 +269,8 @@ class ExpaCalendar:
 				event_data = event
 
 				pdf.set_font("Roboto-Bold", "", 12)
-
-				skip = ["Východ Slunce", "Západ Slunce"]
 				
-				if event_data['summary'] in skip:
-					continue
-				
-				if event_data['summary'].startswith("@sluzba:"):
+				if event_data['summary'].startswith("@sluzba:") or event_data['summary'].startswith("@služba:"):
 					cx, cy = pdf.get_x(), pdf.get_y() #get cursor location
 					pdf.image("img/people.png", 135, 76.5, 6, 6)
 					pdf.set_xy(145, 80)
@@ -295,16 +290,9 @@ class ExpaCalendar:
 					pdf.set_xy(cx, cy) #reset cursor
 					continue
 
-				if event_data['summary'].startswith("Východ Slunce"):
-					continue
-
-				if event_data['summary'].startswith("Západ Slunce"):
-					continue
-
-				if event_data['summary'].startswith("Východ Měsíce"):
-					continue
-
-				if event_data['summary'].startswith("Západ Měsíce"):
+				skip = ["Východ Slunce", "Západ Slunce", "Východ Měsíce", "Západ Měsíce", "@služba", "@sluzba"]
+				
+				if event_data['summary'] in skip:
 					continue
 
 				pdf.set_font("Righteous", "", 12)
