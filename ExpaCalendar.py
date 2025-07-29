@@ -295,6 +295,18 @@ class ExpaCalendar:
 					pdf.set_xy(cx, cy) #reset cursor
 					continue
 
+				if event_data['summary'].startswith("Východ Slunce"):
+					continue
+
+				if event_data['summary'].startswith("Západ Slunce"):
+					continue
+
+				if event_data['summary'].startswith("Východ Měsíce"):
+					continue
+
+				if event_data['summary'].startswith("Západ Měsíce"):
+					continue
+
 				pdf.set_font("Righteous", "", 12)
 				pdf.cell(0, 6, txt=event_data['summary'], border=0, ln=True)
 
