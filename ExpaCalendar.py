@@ -315,7 +315,11 @@ class ExpaCalendar:
 					indent += 1
 					pdf.set_font("Roboto-Regular", "", 8)
 					pdf.cell(10)  # Indent for description
-					pdf.multi_cell(0, 8, txt=event_data['description'], border=0, ln=True)
+					#remove empty newlines
+					event_data['description'] = "\n".join(line for line in event_data['description'].splitlines() if line.strip())
+					pdf.multi_cell(0, 5, txt=event_data['description'], border=0, ln=True)
+					#add empty line after description
+					pdf.cell(0, 2.5, txt="", border=0, ln=True)
 				
 				if indent < 1:
 					pdf.multi_cell(0, 8, txt="", border=0, ln=True)

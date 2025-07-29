@@ -2,6 +2,9 @@ pickle5  # For improved versions of Python 3.8 and below; in 3.9+ the native pic
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
-fpdf
+fpdf2
 qrcode[pil]
 Pillow
+pyephem
+pytz
+pylunar
