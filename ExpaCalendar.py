@@ -293,7 +293,7 @@ class ExpaCalendar:
 				skip = ["Východ Slunce", "Západ Slunce", "Východ Měsíce", "Západ Měsíce", "@služba", "@sluzba"]
 				
 				summary = event_data['summary']
-				if summary in skip or (summary.startswith("# ") and summary[2:] in skip):
+				if summary in skip or (summary.startswith("# ") and summary[2:] in skip) or (summary.startswith("#") and summary[1:] in skip):
 					continue
 
 				pdf.set_font("Righteous", "", 12)
